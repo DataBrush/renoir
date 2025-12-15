@@ -7,7 +7,7 @@ pub use without_profiler::*;
 use crate::{block::BlockStructure, network::Coord, scheduler::BlockId};
 
 #[cfg(feature = "profiler")]
-mod bucket_profiler;
+pub(crate) mod bucket_profiler;
 
 #[cfg(feature = "ssh")]
 pub const TRACING_PREFIX: &str = "__renoir_TRACING_DATA__";

@@ -22,6 +22,7 @@ avro = ["dep:apache-avro"]
 profiler = []
 parquet = ["dep:parquet", "dep:arrow"]
 rdkafka = ["dep:rdkafka", "tokio"]
+hooks = []
 # parquet = ["dep:parquet", "dep:arrow"]
 
 [dependencies]

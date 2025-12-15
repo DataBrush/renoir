@@ -17,6 +17,27 @@ use super::{get_sender, Profiler};
 /// Each bucket will contain events for up to this amount of time.
 const BUCKET_RESOLUTION_MS: TimePoint = 50;
 
+extern "C" {
+    /// The function to call when a block profile event is emitted.
+    pub static mut RENOIR_ON_BLOCK_PROFILE: extern "C" fn(*const MetricsBucket);
+}
+
+#[cfg(not(feature = "hooks"))]
+#[inline(always)]
+extern "C" fn noop(_: *const MetricsBucket) {}
+
+#[cfg(not(feature = "hooks"))]
+#[no_mangle]
+pub static mut RENOIR_ON_BLOCK_PROFILE: extern "C" fn(*const MetricsBucket) = noop;
+
+/// Emit a block profile event
+#[inline(always)]
+fn emit_event(event: &MetricsBucket) {
+    unsafe {
+        (RENOIR_ON_BLOCK_PROFILE)(event as *const MetricsBucket);
+    }
+}
+
 /// A thread-local implementation of a profiler.
 ///
 /// This will collect the events and store them inside buckets of size `BUCKET_RESOLUTION_MS`. All
@@ -56,8 +77,12 @@ impl BucketProfiler {
     #[inline]
     fn bucket(&mut self) -> &mut MetricsBucket {
         let now = self.now();
+
         // the timestamp is outside the last bucket, create a new one
-        if now >= self.buckets.last().unwrap().start_ms + BUCKET_RESOLUTION_MS {
+        let last_bucket = self.buckets.last().unwrap();
+        if now >= last_bucket.start_ms + BUCKET_RESOLUTION_MS {
+            println!("CAROTE");
+            emit_event(last_bucket);
             let start = now - now % BUCKET_RESOLUTION_MS;
             self.buckets.push(MetricsBucket::new(start));
         }
@@ -142,6 +167,7 @@ pub struct LinkMetrics {
 }
 
 /// A bucket with the profiler metrics.
+#[repr(C)]
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct MetricsBucket {
     /// The time point of the start of the bucket.

@@ -152,3 +152,9 @@ pub mod prelude {
     pub use crate::operator::window::{EventTimeWindow, TransactionWindow};
     pub use crate::StreamContext;
 }
+
+#[cfg(feature = "hooks")]
+pub mod hooks {
+    #[cfg(feature = "profiler")]
+    pub use crate::profiler::bucket_profiler::MetricsBucket;
+}
